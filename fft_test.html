@@ -1,51 +1,39 @@
 <html>
 
 <head>
-	<script src="complex_array.js"></script>
-	<script src="fft.js"></script>
-	<script src="player.js"></script>
+    <script src="player.js"></script>
     <script src="dsp.js"></script>
 </head>
 <body>
-	<input type="file" onchange="loadFile(this.files[0])">
-	<input type="button" onclick="play()" value="PLAY">
+    <input type="file" onchange="loadFile(this.files[0])">
+    <input type="button" onclick="play()" value="PLAY">
 
 </body>
 <script>
-	//var fft = new FFT.complex(1, false);
-	//fft.simple(fftOutput, audioBuffer);
+    //var fft = new FFT.complex(1, false);
+    //fft.simple(fftOutput, audioBuffer);
 
-      function test() {
-        var
-          data = new complex_array.ComplexArray(128)
-
-        data.map(function(value, i, n) {
-          value.real = (i > n/3 && i < 2*n/3) ? 1 : 0
-        })
-
-        console.log(data)
-        console.log(data.FFT)
-        console.log(data.FFT())
-        console.log(data.FFT()[0])
+    function test(input) {
+        var fft = new FFT(2048, 44100);
+        fft.forward(input);
+        var spectrum = fft.spectrum;
     }
 
     function doFFT(input){
-    	var output =  new complex_array.ComplexArray(input.length);
-    	//console.log(output[100])
-    	for (var i=0, len = input.length; i<len; i++){
-    		output[i] = input.getChannelData(0)[i]
-    	}
-    	//console.log(output[100])
-    	var fftOutput = output.FFT();
-    	return fftOutput
+        var output =  new complex_array.ComplexArray(input.length);
+        //console.log(output[100])
+        for (var i=0, len = input.length; i<len; i++){
+            output[i] = input.getChannelData(0)[i]
+        }
+        //console.log(output[100])
+        var fftOutput = output.FFT();
+        return fftOutput
     }
 
-    function lengthTest(input){
-
-    }
 
 
 </script>
 </html>
+
 
 
