@@ -12,6 +12,7 @@
 <script>
     //var fft = new FFT.complex(1, false);
     //fft.simple(fftOutput, audioBuffer);
+    var fftResult;
 
     function test(input) {
         var fft = new FFT(2048, 44100);
@@ -20,6 +21,20 @@
     }
 
     function doFFT(input){
+        var result = {};
+
+        for (var i=0, len = input.length % 2048; i<len; i++){
+            input.push(0);
+        }
+
+        for (var i = 0, len = input.length; i<len; i = i+2048){
+            var fft = new FFT(2048, 44100);
+            var hop = input.slice(i, i+2048);
+            fft.forward(hop);
+            console.log(fft.spectrum);
+        }
+
+        /*
         var output =  new complex_array.ComplexArray(input.length);
         //console.log(output[100])
         for (var i=0, len = input.length; i<len; i++){
@@ -28,6 +43,17 @@
         //console.log(output[100])
         var fftOutput = output.FFT();
         return fftOutput
+        */
+    }
+
+    function audioToMono(input){
+        var left = input.getChannelData(0);
+        var right = input.getChannelData(1);
+        var result = new Array(left.length);
+        for (var i = 0, len = input.length; i<len; i++){
+            result[i] = left[i]/2 + right[i]/2
+        }
+        return result
     }
 
 
