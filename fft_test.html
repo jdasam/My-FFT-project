@@ -72,6 +72,8 @@
             fft.forward(hop);
             fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
             smoothingBuffer = fft.spectrum;
+            fft.spectrum = conversionToDB(fft.spectrum);
+
 
             drawSpectrogram(fft.spectrum);
             //console.log(fft.spectrum.length);
@@ -110,7 +112,7 @@
         // iterate over the elements from the array
         for (var i = 0; i < array.length; i++) {
             // draw each pixel with the specific color
-            var value = array[i] * 3000
+            var value = array[i] + 120 // add number
             ctx.fillStyle = hot.getColor(value).hex();
 
             // draw the line at the right side of the canvas
@@ -140,6 +142,15 @@
         for (var i = 0, len = currentArray.length; i<len; i++){
             output[i] = smoothingTimeConstant * bufferArray[i] + (1 - smoothingTimeConstant) * currentArray[i]
         }
+        return output
+    }
+
+    function conversionToDB(array){
+        var output = new Array
+        for (var i = 0, len = array.length; i<len; i++){
+            output[i] = 20 * Math.log(array[i]) / Math.log(10);
+        }
+        //console.log(output)
         return output
     }
 
