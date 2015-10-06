@@ -38,7 +38,7 @@
     var blackman1 = 1/2
     var blackman2 = blackmanAlpha/2
 
-    var smoothingTimeConstant = 0;
+    var smoothingTimeConstant = 0.1;
 
 
     
@@ -70,10 +70,12 @@
             var hop = input.slice(i, i+1024);
             hop = blackmanWindow(hop);
             fft.forward(hop);
+            //fft.spectrum = smoothingFilters(fft.spectrum, 2);
             fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
             smoothingBuffer = fft.spectrum;
             fft.spectrum = conversionToDB(fft.spectrum);
-
+            var peakArray = peakDetection(fft.spectrum)
+            console.log(peakArray.length)
 
             drawSpectrogram(fft.spectrum);
             //console.log(fft.spectrum.length);
@@ -112,7 +114,7 @@
         // iterate over the elements from the array
         for (var i = 0; i < array.length; i++) {
             // draw each pixel with the specific color
-            var value = array[i] + 120 // add number
+            var value = array[i] + 250 // add number
             ctx.fillStyle = hot.getColor(value).hex();
 
             // draw the line at the right side of the canvas
@@ -148,10 +150,42 @@
     function conversionToDB(array){
         var output = new Array
         for (var i = 0, len = array.length; i<len; i++){
-            output[i] = 20 * Math.log(array[i]) / Math.log(10);
+            output[i] = 50 * Math.log(array[i]) / Math.log(10) ;
         }
         //console.log(output)
         return output
+    }
+
+    function smoothingFilters(array, filterWidth){
+        var output = new Array(array.length);
+
+        for (var i = 0, len = array.length; i<len; i++){
+            console.log(array[i])
+            if (i > filterWidth && i +filterWidth < array.length){
+                var sum = 0;
+                for (var k = -filterWidth; k <= filterWidth; k++){
+                    sum += array[i+k];
+                }
+
+                output[i] = sum / (1 + 2 * filterWidth)                
+            }
+            else {
+                output[i] = array[i]
+            }
+
+        }
+        return output;
+    }
+
+    function peakDetection(array){
+        var output = [];
+        for (var i = 0, len = array.length; i<len; i++){
+            if(array[i] > Math.max(array[i-3], array[i-2], array[i-1], array[i+1], array[i+2], array[i+3])){
+                output.push([i, array[i]]);
+            }
+        }
+        output.sort(function())
+        return output;
     }
 
 
