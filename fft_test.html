@@ -74,8 +74,7 @@
             fft.spectrum = smoothing(fft.spectrum, smoothingBuffer);
             smoothingBuffer = fft.spectrum;
             fft.spectrum = conversionToDB(fft.spectrum);
-            var peakArray = peakDetection(fft.spectrum)
-            console.log(peakArray.length)
+            var peakArray = peakDetection(fft.spectrum, 30);
 
             drawSpectrogram(fft.spectrum);
             //console.log(fft.spectrum.length);
@@ -177,15 +176,18 @@
         return output;
     }
 
-    function peakDetection(array){
+    function peakDetection(array, peakNumber){
         var output = [];
         for (var i = 0, len = array.length; i<len; i++){
-            if(array[i] > Math.max(array[i-3], array[i-2], array[i-1], array[i+1], array[i+2], array[i+3])){
+            if(array[i] > Math.max(array[i-3], array[i-2], array[i-1], array[i+1], array[i+2], array[i+3]))
                 output.push([i, array[i]]);
-            }
         }
-        output.sort(function())
-        return output;
+        output.sort(function(a,b){
+            if (a[1] > b[1]) return 1;
+            if (a[1] < b[1]) return -1;
+            return 0;})
+        output = output.slice(0,peakNumber);
+        return output
     }
 
 
