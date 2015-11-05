@@ -20,7 +20,7 @@ audioContext.decodeAudioData(e.target.result, audioFileDecoded, audioFileDecodeF
 function audioFileDecoded(decodedBuffer){
 	audioBuffer = decodedBuffer;
 	var monoAudio = audioToMono(audioBuffer);
-	doFFT(monoAudio)
+	//doFFT(monoAudio)
 }
 
 function audioFileDecodeFailed(e){

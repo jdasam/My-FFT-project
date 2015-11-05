@@ -15,7 +15,7 @@
 <script>
     //var fft = new FFT.complex(1, false);
     //fft.simple(fftOutput, audioBuffer);
-    var fftSize = 4096;
+    var fftSize = 2048;
     var samplingRate = 44100;
     var frequencyBinSize = samplingRate/fftSize;
 
@@ -40,7 +40,7 @@
     var blackman1 = 1/2
     var blackman2 = blackmanAlpha/2
 
-    var smoothingTimeConstant = 0.1;
+    var smoothingTimeConstant = 0;
 
 
     
@@ -54,21 +54,63 @@
 
 
     function test(input) {
-        var fft = new FFT(1024, 44100);
-        fft.forward(input);
+        var monoAudio = audioToMono(input);
+        var fft = new FFT(fftSize, samplingRate);
+        var hop = monoAudio.slice(40000, 40000 + fftSize);
+        hop = blackmanWindow(hop);
+
+
+        fft.forward(hop);
+        fft.spectrum = conversionToDB(fft.spectrum);
+        fft.spectrum = spectrumScaling(fft.spectrum, -30, -100);
+
         var spectrum = fft.spectrum;
+        var peakArray = peakDetection(spectrum,50);
+
+        drawSpectrum(spectrum);
+        drawPeak(peakArray);
+
+
     }
+
+
+    function drawSpectrum(array) {
+
+        for ( var i = 0; i < (array.length); i++ ){
+            var value = array[i];
+            ctx.fillStyle = hot.getColor(value).hex();
+
+            ctx.fillRect(i*1,512-value,1,512);
+            //  console.log([i,value])
+        }
+    };
+
+    function drawPeak(array){
+        for ( var i = 0; i < (array.length); i++ ){
+            ctx.beginPath();
+            ctx.arc(array[i][0], 512- array[i][1] , 5, 0, 2 * Math.PI, false);
+            ctx.fillStyle = 'green';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#003300';
+            ctx.stroke();
+
+        }
+
+
+    }
+
 
     function doFFT(input){
         var result = {};
         var smoothingBuffer = dummyArray;
 
-        for (var i=0, len = input.length % fftSize; i<len; i++){
+        for (var i=0, len = fftSize - input.length % fftSize; i<len; i++){
             input.push(0);
         }
 
-        for (var i = 0, len = input.length; i<len; i = i+fftSize){
-            var fft = new FFT(fftSize, 44100);
+        for (var i = 0, len = input.length; i<len; i = i+fftSize/2){
+            var fft = new FFT(fftSize, samplingRate);
             var hop = input.slice(i, i+fftSize);
             hop = blackmanWindow(hop);
             fft.forward(hop);
@@ -83,8 +125,9 @@
                     totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
                 }
             }
-            console.log(totalRoughness);
+            //console.log(totalRoughness);
             fft.spectrum = conversionToDB(fft.spectrum);
+            fft.spectrum = spectrumScaling(fft.spectrum, -30, -100);
 
             drawSpectrogram(fft.spectrum);
             //console.log(fft.spectrum.length);
@@ -123,7 +166,7 @@
         // iterate over the elements from the array
         for (var i = 0; i < array.length; i++) {
             // draw each pixel with the specific color
-            var value = array[i] + 250 // add number
+            var value = array[i]
             ctx.fillStyle = hot.getColor(value).hex();
 
             // draw the line at the right side of the canvas
@@ -141,7 +184,7 @@
     }
 
     function blackmanWindow(array){
-        var output = new Array
+        var output = new Array(array.length)
         for (var i = 0, len = array.length; i<len; i++){
             output[i] = array[i] * (blackman0 - blackman1 * Math.cos(2 * Math.PI * i / len) + blackman2 * Math.cos(4 * Math.PI * i /len))
         }
@@ -159,7 +202,7 @@
     function conversionToDB(array){
         var output = new Array
         for (var i = 0, len = array.length; i<len; i++){
-            output[i] = 50 * Math.log(array[i]) / Math.log(10) ;
+            output[i] = 20 * Math.log(array[i]) / Math.log(10) ;
         }
         //console.log(output)
         return output
@@ -211,6 +254,14 @@
         var Z = Math.exp(-3.5 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) - Math.exp(-5.75 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) 
 
         return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z
+    }
+
+    function spectrumScaling(array, maxDecibels, minDecibels){
+        var output = new Array(array.length);
+        for (var i = 0, len = array.length; i<len; i++){
+            output[i] = (Math.min(array[i],maxDecibels) - Math.min(array[i],minDecibels)) * 256/(maxDecibels - minDecibels) 
+        }
+        return output
     }
 
 </script>
