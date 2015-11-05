@@ -50,6 +50,21 @@
     }
     
 
+    var PITCH_MIN = 36;
+    var PITCH_MAX = 96;
+    var PITCH_STEP = 0.25;
+    var pitch_range = [];
+    var pitch_range_hz = [];
+    var NUM_HARMONICS = 15; 
+
+    window.onload=function(){       
+        // pitch range of interest
+        for (var pitch = PITCH_MIN; pitch <= PITCH_MAX; pitch = pitch + PITCH_STEP) 
+        {
+            pitch_range.push(pitch);
+            pitch_range_hz.push(midi2hertz(pitch))
+        }       
+    }
 
 
 
@@ -100,6 +115,7 @@
         var fftOutput = output.FFT();
         return fftOutput
         */
+        return (fft.spectrum)
     }
 
     function audioToMono(input){
@@ -211,6 +227,83 @@
         var Z = Math.exp(-3.5 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) - Math.exp(-5.75 * 0.24/(0.0207 * freqMax +18.96) * (freqMax - freqMin)) 
 
         return Math.pow(X,0.1) * 0.5 * Math.pow(Y,3.11) * Z
+    }
+
+
+    function pitchDetection(dataArray){
+
+
+
+        var comb_filter = new Array(dataArray.length);
+        var sum_filter = new Array(dataArray.length);
+        for (var i = 0; i < dataArray.length; i++) {
+            comb_filter[i] = new Array(pitch_range.length);
+            sum_filter[i] = new Array(pitch_range.length);
+        }
+
+        var binfrqs = [];
+        for (var i = 0;i < dataArray.length; i++) {
+            binfrqs[i] = i/analyser.fftSize*context.sampleRate;
+        }
+
+        var FLAG = true;
+        // pitch range of interest
+        for (var pitch = 0; pitch < pitch_range.length; pitch++) 
+        {
+            for (var f= 0;f< dataArray.length; f++) {
+                //Boundary
+                if(binfrqs[f] > NUM_HARMONICS*pitch_range_hz[pitch]) {
+                    comb_filter[f][pitch] = 0;
+                    sum_filter[f][pitch] = 0;
+                }
+
+                else if(binfrqs[f] < pitch_range_hz[pitch]/2) {
+                    comb_filter[f][pitch] = 0;
+                    sum_filter[f][pitch] = 0;
+                }
+
+                else {
+                    comb_filter[f][pitch] = 0.5 * Math.cos(2*Math.PI*binfrqs[f]/pitch_range_hz[pitch]) + 0.5;
+
+                    sum_filter[f][pitch] = 1;
+                }
+            }
+        }   
+
+        for(var f = 0; f < dataArray.length; f++) {
+            //Convert to power instead of decible: Spec power
+            dataArray[f] = Math.pow(10, dataArray[f]/10);
+
+            //Spec power
+            //dataArray[i] = Math.pow(dataArray[i], 2);
+        }
+
+        var pitch_gram = new Array(pitch_range.length);
+        var energy = new Array(pitch_range.length);
+
+
+        // Comb-filtering
+        for(var p = 0; p < pitch_range.length; p++) {
+            pitch_gram[p] = 0;
+            energy[p] = 0;
+
+            for(var f = 0; f < dataArray.length; f++) {
+                pitch_gram[p] += (comb_filter[f][p] * dataArray[f]);
+                energy[p] += (sum_filter[f][p] * dataArray[f]);
+            }
+        }
+
+    }
+
+    function midi2hertz(midi) {
+        var hertz;
+        ///// YOUR CODE IS HERE /////
+        var a = 440; // a is 440 hz...
+        
+        hertz = (a / 32) * Math.pow(2, (midi - 9) / 12);
+
+        /////////////////////////////
+        return hertz;
     }
 
 </script>
