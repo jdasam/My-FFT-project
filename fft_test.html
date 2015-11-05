@@ -57,14 +57,6 @@
     var pitch_range_hz = [];
     var NUM_HARMONICS = 15; 
 
-    window.onload=function(){       
-        // pitch range of interest
-        for (var pitch = PITCH_MIN; pitch <= PITCH_MAX; pitch = pitch + PITCH_STEP) 
-        {
-            pitch_range.push(pitch);
-            pitch_range_hz.push(midi2hertz(pitch))
-        }       
-    }
 
 
 
@@ -78,7 +70,7 @@
         var result = {};
         var smoothingBuffer = dummyArray;
 
-        for (var i=0, len = input.length % fftSize; i<len; i++){
+        for (var i=0, len = fftSize - input.length % fftSize; i<len; i++){
             input.push(0);
         }
 
@@ -98,9 +90,8 @@
                     totalRoughness += roughnessCalculation(peakArray[j], peakArray[k]);
                 }
             }
-            console.log(totalRoughness);
             fft.spectrum = conversionToDB(fft.spectrum);
-
+            console.log(fft.spectrum);
             drawSpectrogram(fft.spectrum);
             //console.log(fft.spectrum.length);
         }
@@ -243,7 +234,7 @@
 
         var binfrqs = [];
         for (var i = 0;i < dataArray.length; i++) {
-            binfrqs[i] = i/analyser.fftSize*context.sampleRate;
+            binfrqs[i] = i/fftSize*samplingRate;
         }
 
         var FLAG = true;
@@ -292,6 +283,8 @@
                 energy[p] += (sum_filter[f][p] * dataArray[f]);
             }
         }
+
+        console.log(pitch_gram)
 
     }
 
